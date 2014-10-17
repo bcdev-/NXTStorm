@@ -14,7 +14,7 @@ as the name is changed.
  0. You just DO WHAT THE FUCK YOU WANT TO.
 '''
 
-from multiprocessing import Queue, Process
+from multiprocessing import Queue, Process, Value
 import logging
 import traceback
 import time
@@ -65,9 +65,11 @@ class Node:
     def __init__(self):
         self.nxt_handler_thread = None
         self.nxt_handler_commands = Queue()
+        self.nxt_handler_interrupts = Queue()
         self.network_commands = Queue()
         self.responses = Queue()
         self.logger = logging.getLogger(__name__)
+        self.nxt_api_is_ready = Value('i', 0)
 
     def start(self):
         logging.info("Starting NxtHandler")
@@ -85,13 +87,13 @@ class Node:
         #TODO
 
     def start_nxt(self):
-        self.nxt_handler_commands.put(NxtHandlerCommand.start_nxt())
+        self.nxt_handler_interrupts.put(NxtHandlerCommand.start_nxt())
 
     def start_forging(self, account_id, secret_phrase):
         self.nxt_handler_commands.put(NxtHandlerCommand.start_forging(account_id, secret_phrase))
 
     def stop_nxt(self):
-        self.nxt_handler_commands.put(NxtHandlerCommand.stop_nxt())
+        self.nxt_handler_interrupts.put(NxtHandlerCommand.stop_nxt())
 
     #### Callbacks for NxtChecker ####
     def nxtchecker_new_block(self, block_id, height):
@@ -99,6 +101,11 @@ class Node:
         self.logger.debug("Found new block: %d - %d" % (height, block_id))
         self.network_commands.put(NetworkCommand.new_block(block_id, height))
 
+    def nxtchecker_api_is_ready(self):
+        self.logger.info("Nxt API is ready")
+        self.nxt_api_is_ready.value = 1
+
+    #### Callbacks for Network ####
     def network_start_forging(self, account_id, secret_phrase):
         self.start_forging()
 

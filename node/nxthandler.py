@@ -36,6 +36,7 @@ class NxtHandler:
     def _stop_nxt_client(self):
         self.logger.info("Stopping NXT client")
         nxt_killer = subprocess.call(config.nxt_stop_command, shell=True, stderr=subprocess.STDOUT, stdout = subprocess.PIPE)
+        self.node.nxt_api_is_ready.value = 0
 
     def _start_forging(self, account_id, secret_phrase):
         self.logger.info("Starting to forge")
@@ -43,13 +44,18 @@ class NxtHandler:
         account = api.get_account(account_id, secret_phrase)
         account.start_forging()
 
-    def _handle_command(self, command):
-        self.logger.debug("Handling command: " + command.name)
+    def _handle_interrupt(self, command):
+        self.logger.debug("Handling interrupt: " + command.name)
         if command.command_type == command.START_NXT:
             self._start_nxt_client()
         elif command.command_type == command.STOP_NXT:
             self._stop_nxt_client()
-        elif command.command_type == command.START_FORGING:
+        else:
+            self.logger.error("Unknown interrupt: " + str(command.command_type) + " " + str(command.name))
+
+    def _handle_command(self, command):
+        self.logger.debug("Handling command: " + command.name)
+        if command.command_type == command.START_FORGING:
             self._start_forging(command.account_id, command.secret_phrase)
         else:
             self.logger.error("Unknown command: " + str(command.command_type) + " " + str(command.name))
@@ -57,9 +63,11 @@ class NxtHandler:
     def run(self):
         self.logger.info("Started")
         while True:
-            if self.node.nxt_handler_commands.empty():
-                time.sleep(0.001)
-            else:
-                #TODO: try except
+            #TODO: try except
+            if not self.node.nxt_handler_interrupts.empty():
+                self._handle_interrupt(self.node.nxt_handler_interrupts.get())
+            elif not self.node.nxt_handler_commands.empty() and self.node.nxt_api_is_ready.value:
                 self._handle_command(self.node.nxt_handler_commands.get())
+            else:
+                time.sleep(0.01)
 

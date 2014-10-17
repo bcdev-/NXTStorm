@@ -35,6 +35,17 @@ class NxtChecker:
             self.newest_block_id = block.block_id
             self.node.nxtchecker_new_block(block.block_id, block.height)
 
+    def _is_api_ready(self):
+        try:
+            api = nxtapi.Nxt()
+            state = api.get_state()
+
+            self.node.nxtchecker_api_is_ready()
+        except ConnectionRefusedError:
+            pass
+        except requests.exceptions.ConnectionError:
+            pass
+
     def _periodic_tasks(self):
         try:
             self._check_for_new_block()
@@ -47,6 +58,9 @@ class NxtChecker:
     def run(self):
         self.logger.info("Started")
         while True:
-            self._periodic_tasks()
+            if not self.node.nxt_api_is_ready.value:
+                self._is_api_ready()
+            else:
+                self._periodic_tasks()
             time.sleep(0.05)
 

@@ -61,13 +61,13 @@ class Network:
                 self._connect()
             if self.connected:
                 if self.node.network_commands.empty():
-                    time.sleep(0.001)
+                    time.sleep(0.01)
                 elif self.connected:
                     #TODO: try except
                     self._handle_command(self.node.network_commands.get())
                 else:
-                    time.sleep(0.001)
+                    time.sleep(0.01)
             else:
-                time.sleep(0.001)
+                time.sleep(0.01)
 
 
