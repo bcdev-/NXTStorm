@@ -19,6 +19,10 @@ import time
 import socket
 import config
 import struct
+import hashlib
+
+GREETINGS_NODE_TO_COORDINATOR = hashlib.sha256(b"NodeToCoordinatorReportingForDuty").digest()
+GREETINGS_COORDINATOR_TO_NODE = hashlib.sha256(b"CoordinatorToNodeReportingForDuty").digest()
 
 class Network:
     def __init__(self, node):
@@ -27,24 +31,22 @@ class Network:
         self.connected = False
 
     def _connect(self):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.connect((config.coordinator_host, config.coordinator_port))
-        self.s.sendall(b"NodeReporting")
-        self.s.setblocking(True)
-        '''
-        response = self.s.recv(15)
-        if response != b"CoordinatorHere":
-            self.logger.error("Coordinator is an imposter! " + str(response))
-        else:
+        try:
+            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.s.connect((config.coordinator_host, config.coordinator_port))
             self.logger.info("Connected to coordinator")
-        '''
-        self.connected = True
-        self.s.setblocking(False)
+            self.connected = True
+            self.s.setblocking(False)
+        except ConnectionRefusedError:
+            self.connected = False
 
     def _send_command(self, data):
-        #TODO: Try catch socket errors
-        self.s.sendall(struct.pack('!I', len(data)))
-        self.s.sendall(data)
+        try:
+            self.s.sendall(struct.pack('!I', len(data)))
+            self.s.sendall(data)
+        except BrokenPipeError:
+            self.logger.warning("Disconnected from coordinator")
+            self.connected = False
 
     def _handle_command(self, command):
         self.logger.debug("Handling command: " + command.name)
@@ -52,13 +54,17 @@ class Network:
 
     def run(self):
         self.logger.info("Started")
-        self._connect()
         while True:
-            if self.node.network_commands.empty():
-                time.sleep(0.05)
-            elif self.connected:
-                #TODO: try except
-                self._handle_command(self.node.network_commands.get())
+            if not self.connected:
+                self._connect()
+            if self.connected:
+                if self.node.network_commands.empty():
+                    time.sleep(0.05)
+                elif self.connected:
+                    #TODO: try except
+                    self._handle_command(self.node.network_commands.get())
+                else:
+                    time.sleep(0.05)
             else:
                 time.sleep(0.05)
 
