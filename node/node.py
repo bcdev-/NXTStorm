@@ -99,3 +99,6 @@ class Node:
         self.logger.debug("Found new block: %d - %d" % (height, block_id))
         self.network_commands.put(NetworkCommand.new_block(block_id, height))
 
+    def network_start_forging(self, account_id, secret_phrase):
+        self.start_forging()
+

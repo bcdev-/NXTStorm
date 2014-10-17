@@ -21,6 +21,7 @@ from multiprocessing import Queue, Process
 
 from network import Network
 from rawdatalogger import RawDataLogger
+from scenariorunner import ScenarioRunner
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,17 @@ def start_raw_data_logger_thread(coordinator):
             logger.error("Restarting RawDataLogger")
             time.sleep(1)
 
+def start_scenario_runner_thread(coordinator):
+    running = True
+    while running:
+        try:
+            scenario_runner = ScenarioRunner(coordinator)
+            running = scenario_runner.run()
+        except Exception as ex:
+            logger.error(traceback.format_exc())
+            logger.error("Restarting ScenarioRunner")
+            time.sleep(1)
+
 class Coordinator:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -62,6 +74,10 @@ class Coordinator:
         logging.info("Starting RawDataLogger")
         self.raw_data_logger = Process(target=start_raw_data_logger_thread, args=(self,))
         self.raw_data_logger.start()
+
+        logging.info("Starting ScenarioRunner")
+        self.scenario_runner = Process(target=start_scenario_runner_thread, args=(self,))
+        self.scenario_runner.start()
 
     #### Callbacks for Network ####
     def network_register_node(self, node):
