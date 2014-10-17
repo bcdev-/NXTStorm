@@ -93,8 +93,9 @@ class Node:
     def stop_nxt(self):
         self.nxt_handler_commands.put(NxtHandlerCommand.stop_nxt())
 
-    #### Methods for NxtChecker ####
+    #### Callbacks for NxtChecker ####
     def nxtchecker_new_block(self, block_id, height):
         # TODO: Backup buffer file
         self.logger.debug("Found new block: %d - %d" % (height, block_id))
         self.network_commands.put(NetworkCommand.new_block(block_id, height))
+

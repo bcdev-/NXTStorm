@@ -58,7 +58,7 @@ class NxtHandler:
         self.logger.info("Started")
         while True:
             if self.node.nxt_handler_commands.empty():
-                time.sleep(0.05)
+                time.sleep(0.001)
             else:
                 #TODO: try except
                 self._handle_command(self.node.nxt_handler_commands.get())

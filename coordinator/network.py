@@ -20,6 +20,7 @@ import config
 import hashlib
 import struct
 import time
+import traceback
 
 GREETINGS_NODE_TO_COORDINATOR = hashlib.sha256(b"NodeToCoordinatorReportingForDuty").digest()
 GREETINGS_COORDINATOR_TO_NODE = hashlib.sha256(b"CoordinatorToNodeReportingForDuty").digest()
@@ -35,6 +36,7 @@ class Network:
     def _open_socket(self):
         #TODO: Try catch for ports < 1024
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((config.host, config.port))
         self.socket.setblocking(0)
         self.socket.listen(1)
@@ -43,8 +45,9 @@ class Network:
         while True:
             try:
                 conn, address = self.socket.accept()
+                conn.setblocking(0)
                 #TODO: Send greetings
-                self.nodes.append(NodeConn(conn, address))
+                self.nodes.append(NodeConn(self.coordinator, conn, address))
 
                 self.logger.info("Connection accepted from " + address[0])
             except BlockingIOError:
@@ -53,16 +56,23 @@ class Network:
     def _manage_nodes(self):
         for node in self.nodes:
             #TODO: Try&remove if conn failed
-            node.fetch_packets()
-            while node.parse_command():
-                pass
+            try:
+                node.fetch_packets()
+                while node.parse_command():
+                    pass
+            except Exception:
+                self.logger.error(traceback.format_exc())
+                self.logger.error("Node " + node.address[0] + " caused an error, removing.")
+                #TODO: Close connection properly
+                self.nodes.remove(node)
+                continue
 
     def run(self):
         self.logger.info("Started")
         self._open_socket()
 
         while True:
-            time.sleep(0.05)
+            time.sleep(0.001)
             self._accept_connections()
             self._manage_nodes()
 

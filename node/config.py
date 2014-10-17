@@ -13,3 +13,4 @@ secret_phrase = "aaa"
 coordinator_host = "127.0.0.1"
 coordinator_port = 6666
 
+name = "native"

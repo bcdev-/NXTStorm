@@ -20,6 +20,7 @@ import socket
 import config
 import struct
 import hashlib
+import json
 
 GREETINGS_NODE_TO_COORDINATOR = hashlib.sha256(b"NodeToCoordinatorReportingForDuty").digest()
 GREETINGS_COORDINATOR_TO_NODE = hashlib.sha256(b"CoordinatorToNodeReportingForDuty").digest()
@@ -36,6 +37,7 @@ class Network:
             self.s.connect((config.coordinator_host, config.coordinator_port))
             self.logger.info("Connected to coordinator")
             self.connected = True
+            self._send_command(bytes(json.dumps({"name": "hello", "node_name": config.name}), "utf-8"))
             self.s.setblocking(False)
         except ConnectionRefusedError:
             self.connected = False
@@ -59,13 +61,13 @@ class Network:
                 self._connect()
             if self.connected:
                 if self.node.network_commands.empty():
-                    time.sleep(0.05)
+                    time.sleep(0.001)
                 elif self.connected:
                     #TODO: try except
                     self._handle_command(self.node.network_commands.get())
                 else:
-                    time.sleep(0.05)
+                    time.sleep(0.001)
             else:
-                time.sleep(0.05)
+                time.sleep(0.001)
 
 
