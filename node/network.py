@@ -73,12 +73,16 @@ class Network:
         name = command['name']
         if name == "hello":
             pass # TODO: Process this command
+        if name == "start_nxt":
+            self.node.start_nxt()
+        if name == "start_forging":
+            self.node.start_forging(command['account_id'], command['secret_phrase'])
 
     def _parse_incoming_command(self):
         parsed_a_command = False
         if len(self.packet_buffer) > 4:
             command_length = struct.unpack('!I', self.packet_buffer[:4])[0]
-            if command_length + 4 >= len(self.packet_buffer):
+            if command_length + 4 <= len(self.packet_buffer):
                 try:
                     command = bytes(self.packet_buffer[4:command_length + 4])
                     command = command.decode("utf-8")

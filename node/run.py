@@ -28,9 +28,5 @@ from node import Node
 node = Node()
 node.start()
 
-node.start_nxt()
-node.start_forging(config.account_id, config.secret_phrase)
 time.sleep(600000)
-node.stop_nxt()
-time.sleep(2)
 

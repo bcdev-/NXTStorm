@@ -48,7 +48,8 @@ class Network:
                 conn, address = self.socket.accept()
                 conn.setblocking(0)
                 self._send_command(conn, json.dumps({"name": "hello"}))
-                #TODO: Send greetings
+                self._send_command(conn, json.dumps({"name": "start_nxt"}))
+                self._send_command(conn, json.dumps({"name": "start_forging", "secret_phrase": "aaa", "account_id": 828683301869051229}))
                 self.nodes.append(NodeConn(self.coordinator, conn, address))
 
                 self.logger.info("Connection accepted from " + address[0])
