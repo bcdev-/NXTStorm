@@ -36,15 +36,18 @@ class NodeConn:
         self.block_id = 0
         self.block_height = 0
 
-    def fetch_packets(self):
+    def close(self):
         try:
-            buff = self.conn.recv(1024)
-            self.packet_buffer += buff
-            if len(self.packet_buffer) > PACKET_BUFFER_LIMIT:
-                self.logger.error(self.address[0] + " is trying to flood us with data!")
-                raise OverflowError
-        except BlockingIOError:
+            self.conn.close()
+        except Exception:
             pass
+
+    def fetch_packets(self):
+        buff = self.conn.recv(1024)
+        self.packet_buffer += buff
+        if len(self.packet_buffer) > PACKET_BUFFER_LIMIT:
+            self.logger.error(self.address[0] + " is trying to flood us with data!")
+            raise OverflowError
 
     def parse_command(self):
         parsed_a_command = False
@@ -56,14 +59,14 @@ class NodeConn:
                     command = command.decode("utf-8")
                     command = json.loads(command)
                 except Exception:
-                    self.logger.error(self.name + " sent malformed json!")
+                    self.logger.error(self.name + " sent a malformed json!")
                     raise SyntaxError
                 self.packet_buffer = self.packet_buffer[command_length + 4:]
                 parsed_a_command = True
 
+                self.logger.debug("Command " + str(command) + " from " + self.address[0])
                 self._process_command(command)
 
-#                self.logger.debug("Command " + str(command) + " from " + self.address[0])
                 
         return parsed_a_command
 

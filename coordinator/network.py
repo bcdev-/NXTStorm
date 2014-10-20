@@ -21,6 +21,7 @@ import hashlib
 import struct
 import time
 import traceback
+import json
 
 GREETINGS_NODE_TO_COORDINATOR = hashlib.sha256(b"NodeToCoordinatorReportingForDuty").digest()
 GREETINGS_COORDINATOR_TO_NODE = hashlib.sha256(b"CoordinatorToNodeReportingForDuty").digest()
@@ -46,26 +47,38 @@ class Network:
             try:
                 conn, address = self.socket.accept()
                 conn.setblocking(0)
+                self._send_command(conn, json.dumps({"name": "hello"}))
                 #TODO: Send greetings
                 self.nodes.append(NodeConn(self.coordinator, conn, address))
 
                 self.logger.info("Connection accepted from " + address[0])
-            except BlockingIOError:
+            except Exception:
                 break
+
+    def _send_command(self, conn, data):
+        if type(data) == str:
+            data = bytes(data, 'utf-8')
+        conn.sendall(struct.pack('!I', len(data)))
+        conn.sendall(data)
 
     def _manage_nodes(self):
         for node in self.nodes:
-            #TODO: Try&remove if conn failed
+            #TODO: Use blocking network io
             try:
                 node.fetch_packets()
                 while node.parse_command():
                     pass
+            except BlockingIOError:
+                pass
+            except ConnectionResetError:
+                self.logger.error("Node " + node.address[0] + " just... Disconnected.")
+                node.conn.close()
+                self.nodes.remove(node)
             except Exception:
                 self.logger.error(traceback.format_exc())
                 self.logger.error("Node " + node.address[0] + " caused an error, removing.")
-                #TODO: Close connection properly
+                node.conn.close()
                 self.nodes.remove(node)
-                continue
 
     def run(self):
         self.logger.info("Started")

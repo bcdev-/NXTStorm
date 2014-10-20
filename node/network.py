@@ -21,6 +21,7 @@ import config
 import struct
 import hashlib
 import json
+import traceback
 
 GREETINGS_NODE_TO_COORDINATOR = hashlib.sha256(b"NodeToCoordinatorReportingForDuty").digest()
 GREETINGS_COORDINATOR_TO_NODE = hashlib.sha256(b"CoordinatorToNodeReportingForDuty").digest()
@@ -30,6 +31,7 @@ class Network:
         self.node = node
         self.logger = logging.getLogger(__name__)
         self.connected = False
+        self.packet_buffer = bytearray()
 
     def _connect(self):
         try:
@@ -39,8 +41,11 @@ class Network:
             self.connected = True
             self._send_command(bytes(json.dumps({"name": "hello", "node_name": config.name}), "utf-8"))
             self.s.setblocking(False)
-        except ConnectionRefusedError:
+        except Exception:
+            #TODO: After some failed connections, a bogus socket seems to be made, that "looks like" it works...
+            self.logger.warning("Connection from coordinator refused")
             self.connected = False
+            time.sleep(1)
 
     def _send_command(self, data):
         try:
@@ -49,6 +54,49 @@ class Network:
         except BrokenPipeError:
             self.logger.warning("Disconnected from coordinator")
             self.connected = False
+            time.sleep(1)
+
+    def _fetch_packets(self):
+        #TODO: Networking in another thread [to save cpu consumption]
+        #TODO: Heartbeats - sometimes node thinks that connection is still on, when it's off.
+        try:
+            buff = self.s.recv(1024)
+            self.packet_buffer += buff
+        except BlockingIOError:
+            pass
+        except Exception:
+            self.logger.warning("Disconnected from coordinator")
+            self.connected = False
+            time.sleep(1)
+
+    def _process_command(self, command):
+        name = command['name']
+        if name == "hello":
+            pass # TODO: Process this command
+
+    def _parse_incoming_command(self):
+        parsed_a_command = False
+        if len(self.packet_buffer) > 4:
+            command_length = struct.unpack('!I', self.packet_buffer[:4])[0]
+            if command_length + 4 >= len(self.packet_buffer):
+                try:
+                    command = bytes(self.packet_buffer[4:command_length + 4])
+                    command = command.decode("utf-8")
+                    command = json.loads(command)
+
+                    self.packet_buffer = self.packet_buffer[command_length + 4:]
+                    parsed_a_command = True
+
+                    self.logger.debug("Command " + str(command) + " from coordinator")
+                    self._process_command(command)
+                except Exception:
+                    self.logger.error("Coordinator sent a malformed json: " + str(command))
+                    self.logger.error(traceback.format_exc())
+                    self.connected = False
+                    return False
+
+
+        return parsed_a_command
 
     def _handle_command(self, command):
         self.logger.debug("Handling command: " + command.name)
@@ -60,6 +108,9 @@ class Network:
             if not self.connected:
                 self._connect()
             if self.connected:
+                self._fetch_packets()
+                while self._parse_incoming_command():
+                    pass
                 if self.node.network_commands.empty():
                     time.sleep(0.01)
                 elif self.connected:
