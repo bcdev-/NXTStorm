@@ -17,7 +17,8 @@ as the name is changed.
 import logging
 import traceback
 import time
-from multiprocessing import Queue, Process
+from threading import Thread
+from queue import Queue
 
 from network import Network
 from rawdatalogger import RawDataLogger
@@ -68,15 +69,15 @@ class Coordinator:
         self.logger.info("Starting coordinator")
 
         logging.info("Starting Network")
-        self.network = Process(target=start_network_thread, args=(self,))
+        self.network = Thread(target=start_network_thread, args=(self,))
         self.network.start()
 
         logging.info("Starting RawDataLogger")
-        self.raw_data_logger = Process(target=start_raw_data_logger_thread, args=(self,))
+        self.raw_data_logger = Thread(target=start_raw_data_logger_thread, args=(self,))
         self.raw_data_logger.start()
 
         logging.info("Starting ScenarioRunner")
-        self.scenario_runner = Process(target=start_scenario_runner_thread, args=(self,))
+        self.scenario_runner = Thread(target=start_scenario_runner_thread, args=(self,))
         self.scenario_runner.start()
 
     #### Callbacks for Network ####

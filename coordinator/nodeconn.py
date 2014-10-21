@@ -18,6 +18,7 @@ import logging
 import struct
 import json
 import socket
+from queue import Queue
 
 PACKET_BUFFER_LIMIT = 2**20
 
@@ -32,6 +33,9 @@ class NodeConn:
         self.accepted = False
         self.name = address[0]
         self.coordinator = coordinator
+        self.scenario_progress = None
+
+        self.command_buffer = Queue()
 
         self.block_id = 0
         self.block_height = 0
@@ -43,11 +47,14 @@ class NodeConn:
             pass
 
     def fetch_packets(self):
-        buff = self.conn.recv(1024)
-        self.packet_buffer += buff
-        if len(self.packet_buffer) > PACKET_BUFFER_LIMIT:
-            self.logger.error(self.address[0] + " is trying to flood us with data!")
-            raise OverflowError
+        try:
+            buff = self.conn.recv(1024)
+            self.packet_buffer += buff
+            if len(self.packet_buffer) > PACKET_BUFFER_LIMIT:
+                self.logger.error(self.address[0] + " is trying to flood us with data!")
+                raise OverflowError
+        except BlockingIOError:
+            pass
 
     def parse_command(self):
         parsed_a_command = False
@@ -90,3 +97,11 @@ class NodeConn:
         self.block_id = int(command['block_id'])
         self.height = int(command['height'])
         self.coordinator.network_new_block(self, command)
+
+    #### Commands from Scenario Runner ####
+    def start_nxt(self):
+        self.command_buffer.put(json.dumps({"name": "start_nxt"}))
+
+    def start_forging(self):
+        self.command_buffer.put(json.dumps({"name": "start_forging", "secret_phrase": "aaa", "account_id": 828683301869051229}))
+

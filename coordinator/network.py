@@ -48,8 +48,6 @@ class Network:
                 conn, address = self.socket.accept()
                 conn.setblocking(0)
                 self._send_command(conn, json.dumps({"name": "hello"}))
-                self._send_command(conn, json.dumps({"name": "start_nxt"}))
-                self._send_command(conn, json.dumps({"name": "start_forging", "secret_phrase": "aaa", "account_id": 828683301869051229}))
                 self.nodes.append(NodeConn(self.coordinator, conn, address))
 
                 self.logger.info("Connection accepted from " + address[0])
@@ -69,8 +67,8 @@ class Network:
                 node.fetch_packets()
                 while node.parse_command():
                     pass
-            except BlockingIOError:
-                pass
+                while not node.command_buffer.empty():
+                    self._send_command(node.conn, node.command_buffer.get())
             except ConnectionResetError:
                 self.logger.error("Node " + node.address[0] + " just... Disconnected.")
                 node.conn.close()

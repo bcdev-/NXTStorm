@@ -25,9 +25,19 @@ class ScenarioRunner:
         self.coordinator = coordinator
         self.scenario = None
 
+    def _start_node(self, node):
+        node.start_nxt()
+        node.start_forging()
+        node.scenario_progress = {'started': True, 'start_time': time.time()}
+
+    def _tick_node(self, node):
+        if node.scenario_progress == None:
+            self._start_node(node)
+
     def run(self):
         self.logger.info("Started")
         while True:
-            time.sleep(0.001)
-            pass
+            time.sleep(0.01)
+            for node in self.coordinator.nodes:
+                self._tick_node(node)
 
