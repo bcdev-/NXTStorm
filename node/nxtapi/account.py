@@ -17,9 +17,12 @@ as the name is changed.
 import requests
 import json
 
+from .send_money_tx import SendMoneyTx
+
 class Account:
     def __init__(self, nxt, account_id, secret_phrase):
         self._nxt = nxt
+        #TODO What if account_id == None?
         self.account_id = account_id
         self.secret_phrase = secret_phrase
 
@@ -37,8 +40,8 @@ class Account:
     def send_money(self, recipient, amountNQT, feeNQT = 100000000, deadline = 1440):
         url = ("http://" + self._nxt.host + "/nxt?requestType=" + "sendMoney" + "&secretPhrase=" + self.secret_phrase +
             "&recipient=" + str(int(recipient)) + "&amountNQT=" + str(int(amountNQT)) + "&feeNQT=" + str(int(feeNQT)) + "&deadline=" + str(int(deadline)))
-#        print(url)
         #TODO: Error handling
         r = requests.post(url)
-        print(r.text)
 
+    def send_money_tx(self, recipient, amountNQT):
+        return SendMoneyTx(self._nxt, self, recipient, amountNQT)

@@ -24,20 +24,27 @@ class ScenarioRunner:
         self.logger = logging.getLogger(__name__)
         self.coordinator = coordinator
         self.scenario = None
+        self.progress = None
 
     def _start_node(self, node):
         node.start_nxt()
         node.start_forging()
         node.scenario_progress = {'started': True, 'start_time': time.time()}
 
+    def _send_money(self, node):
+        node.send_money(17211701776878284146, 100000000)
+
     def _tick_node(self, node):
         if node.scenario_progress == None:
             self._start_node(node)
+        elif node.scenario_progress['started'] == True:
+            self._send_money(node)
 
     def run(self):
         self.logger.info("Started")
         while True:
-            time.sleep(0.01)
+            time.sleep(1) #TODO: 0.01 with proper time handling
             for node in self.coordinator.nodes:
                 self._tick_node(node)
+            
 

@@ -68,7 +68,9 @@ class Network:
                 while node.parse_command():
                     pass
                 while not node.command_buffer.empty():
-                    self._send_command(node.conn, node.command_buffer.get())
+                    command = node.command_buffer.get()
+                    self.logger.info(node.name + ": Sending command " + command)
+                    self._send_command(node.conn, command)
             except ConnectionResetError:
                 self.logger.error("Node " + node.address[0] + " just... Disconnected.")
                 node.conn.close()

@@ -29,5 +29,7 @@ class Block:
         r = requests.post(url)
         data = json.loads(r.text)
         self.height = data['height']
+        self.number_of_transactions = data['numberOfTransactions']
+        self.transactions = data['transactions']
         pass
 

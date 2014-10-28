@@ -86,20 +86,32 @@ class Node:
         logging.info("Stopping NxtHandler")
         #TODO
 
+    def push_nxt_handler_command(self, command):
+        self.nxt_handler_commands.put(command)
+
+    def push_nxt_handler_interrupt(self, command):
+        self.nxt_handler_interrupts.put(command)
+
+    '''
     def start_nxt(self):
         self.nxt_handler_interrupts.put(NxtHandlerCommand.start_nxt())
 
     def start_forging(self, account_id, secret_phrase):
+        #TODO account ID is redundant
         self.nxt_handler_commands.put(NxtHandlerCommand.start_forging(account_id, secret_phrase))
 
     def stop_nxt(self):
         self.nxt_handler_interrupts.put(NxtHandlerCommand.stop_nxt())
 
+    def send_money(self, secret_phrase, recipient, amountNQT):
+        self.nxt_handler_commands.put(NxtHandlerCommand.send_money(secret_phrase, recipient, amountNQT))
+    '''
+
     #### Callbacks for NxtChecker ####
-    def nxtchecker_new_block(self, block_id, height):
+    def nxtchecker_new_block(self, block_id, height, transactions):
         # TODO: Backup buffer file
-        self.logger.debug("Found new block: %d - %d" % (height, block_id))
-        self.network_commands.put(NetworkCommand.new_block(block_id, height))
+        self.logger.debug("Found new block: %d - %d - %s" % (height, block_id, str(transactions)))
+        self.network_commands.put(NetworkCommand.new_block(block_id, height, transactions))
 
     def nxtchecker_api_is_ready(self):
         self.logger.info("Nxt API is ready")

@@ -33,7 +33,7 @@ class NxtChecker:
         block = api.get_last_block()
         if block.block_id != self.newest_block_id:
             self.newest_block_id = block.block_id
-            self.node.nxtchecker_new_block(block.block_id, block.height)
+            self.node.nxtchecker_new_block(block.block_id, block.height, block.transactions)
 
     def _is_api_ready(self):
         try:

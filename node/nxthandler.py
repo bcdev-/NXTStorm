@@ -44,21 +44,30 @@ class NxtHandler:
         account = api.get_account(account_id, secret_phrase)
         account.start_forging()
 
+    def _send_money(self, recipient, secret_phrase, amountNQT):
+        self.logger.info("Sending money")
+        api = nxtapi.Nxt()
+        account = api.get_account(None, secret_phrase)
+        tx = account.send_money_tx(recipient, amountNQT)
+        tx.send()
+
     def _handle_interrupt(self, command):
-        self.logger.debug("Handling interrupt: " + command.name)
-        if command.command_type == command.START_NXT:
+        self.logger.debug("Handling interrupt: " + command['name'])
+        if command['name'] == 'start_nxt':
             self._start_nxt_client()
-        elif command.command_type == command.STOP_NXT:
-            self._stop_nxt_client()
+#        elif command.command_type == command.STOP_NXT:
+#            self._stop_nxt_client()
         else:
-            self.logger.error("Unknown interrupt: " + str(command.command_type) + " " + str(command.name))
+            self.logger.error("Unknown interrupt: " + str(command))
 
     def _handle_command(self, command):
-        self.logger.debug("Handling command: " + command.name)
-        if command.command_type == command.START_FORGING:
-            self._start_forging(command.account_id, command.secret_phrase)
+        self.logger.debug("Handling command: " + command['name'])
+        if command['name'] == 'start_forging':
+            self._start_forging(command['account_id'], command['secret_phrase'])
+        if command['name'] == 'send_money':
+            self._send_money(command['recipient'], command['secret_phrase'], command['amountNQT'])
         else:
-            self.logger.error("Unknown command: " + str(command.command_type) + " " + str(command.name))
+            self.logger.error("Unknown command: " + str(command))
 
     def run(self):
         self.logger.info("Started")

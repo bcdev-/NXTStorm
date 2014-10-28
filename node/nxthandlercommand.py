@@ -14,10 +14,12 @@ as the name is changed.
  0. You just DO WHAT THE FUCK YOU WANT TO.
 '''
 
+#TODO: This class is redundant, remove!
 class NxtHandlerCommand:
     START_NXT = 0
     STOP_NXT = 1
     START_FORGING = 2
+    SEND_MONEY = 2
 
     def __init__(self, command_type):
         self.command_type = command_type
@@ -40,5 +42,14 @@ class NxtHandlerCommand:
         command.name = "Start forging"
         command.account_id = account_id
         command.secret_phrase = secret_phrase
+        return command
+
+    @classmethod
+    def send_money(cls, secret_phrase, recipient, amountNQT):
+        command = cls(cls.SEND_MONEY)
+        command.name = "Send money"
+        command.secret_phrase = secret_phrase
+        command.recipient = recipient
+        command.amountNQT = amountNQT
         return command
 

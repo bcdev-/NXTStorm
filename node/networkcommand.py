@@ -24,12 +24,13 @@ class NetworkCommand:
         self.command_type = command_type
 
     @classmethod
-    def new_block(cls, block_id, height):
+    def new_block(cls, block_id, height, transactions):
         command = cls(cls.NEW_BLOCK)
         command.name = "new_block"
         command.timestamp = time.time()
         command.block_id = block_id
         command.height = height
+        command.transactions = transactions
         command.serialize = command.serialize_new_block
         return command
 
@@ -38,5 +39,6 @@ class NetworkCommand:
         data['block_id'] = self.block_id
         data['height'] = self.height
         data['timestamp'] = self.timestamp
+        data['transactions'] = self.transactions
         return bytes(json.dumps(data), "ascii")
 

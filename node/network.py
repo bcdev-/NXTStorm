@@ -74,9 +74,18 @@ class Network:
         if name == "hello":
             pass # TODO: Process this command
         if name == "start_nxt":
-            self.node.start_nxt()
+            self.node.push_nxt_handler_interrupt(command)
+#            self.node.start_nxt()
         if name == "start_forging":
-            self.node.start_forging(command['account_id'], command['secret_phrase'])
+            self.node.push_nxt_handler_command(command)
+#            self.node.start_forging(command['account_id'], command['secret_phrase'])
+        if name == "prepare_send_money_tx":
+#            self.node.push_nxt_handler_command(command)
+#            self.node.prepare_send_money_tx(command['secret_phrase'], command['recipient'], command['amountNQT'])
+            pass
+        if name == "send_money":
+            self.node.push_nxt_handler_command(command)
+#            self.node.send_money(command['secret_phrase'], command['recipient'], command['amountNQT'])
 
     def _parse_incoming_command(self):
         parsed_a_command = False

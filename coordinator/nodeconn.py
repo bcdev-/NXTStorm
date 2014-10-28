@@ -22,7 +22,6 @@ from queue import Queue
 
 PACKET_BUFFER_LIMIT = 2**20
 
-#TODO: Maybe mutex this class?
 class NodeConn:
     def __init__(self, coordinator, conn, address):
         self.packet_buffer = bytearray()
@@ -30,10 +29,14 @@ class NodeConn:
         self.address = address
         self.logger = logging.getLogger(__name__)
         #TODO: Add greetings from node before accepting
+        #TODO: Drop connection if not greeted for 5 sec
+        #TODO: Greeting uses a secret message
         self.accepted = False
         self.name = address[0]
         self.coordinator = coordinator
         self.scenario_progress = None
+        self.secret_phrase = "aaa"
+        self.account_id = 828683301869051229
 
         self.command_buffer = Queue()
 
@@ -74,7 +77,6 @@ class NodeConn:
                 self.logger.debug("Command " + str(command) + " from " + self.address[0])
                 self._process_command(command)
 
-                
         return parsed_a_command
 
     #### Command definitions ####
@@ -103,5 +105,9 @@ class NodeConn:
         self.command_buffer.put(json.dumps({"name": "start_nxt"}))
 
     def start_forging(self):
-        self.command_buffer.put(json.dumps({"name": "start_forging", "secret_phrase": "aaa", "account_id": 828683301869051229}))
+        self.command_buffer.put(json.dumps({"name": "start_forging", "secret_phrase": self.secret_phrase, "account_id": self.account_id}))
+
+    def send_money(self, recipient, amountNQT):
+        self.command_buffer.put(json.dumps({"name": "send_money", "secret_phrase": self.secret_phrase,
+                                            "recipient": recipient, "amountNQT": amountNQT}))
 

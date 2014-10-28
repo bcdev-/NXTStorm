@@ -40,3 +40,15 @@ class Nxt:
     def get_block(self, block_id):
         return Block(self, block_id)
 
+    def get_tx(self, transaction_id):
+        url = "http://" + self.host + "/nxt?requestType=getTransaction" + "&transaction=" + str(transaction_id)
+        #TODO: Error handling
+        r = requests.get(url)
+        return json.loads(r.text)
+
+    def does_tx_exist(self, transaction_id):
+        status = self.get_tx(transaction_id)
+        if 'transaction' in status:
+            return True
+        return False
+

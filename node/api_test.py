@@ -22,16 +22,22 @@ if sys.version_info < (3, 0):
 
 import nxtapi
 
-#account_id = 828683301869051229
-#secret_phrase = "aaa"
+account_id = 828683301869051229
+secret_phrase = "aaa"
 
 #account_id = int(sys.argv[1])
 #secret_phrase = sys.argv[2]
 
 api = nxtapi.Nxt()
-print(api.get_last_block().block_id)
-'''
+#print(api.get_last_block().block_id)
+
 account = api.get_account(account_id, secret_phrase)
+
+tx = account.send_money_tx(17211701776878284146, 100000000)
+print(tx.transaction_id)
+tx_id = tx.send()
+print(api.does_tx_exist(tx.transaction_id))
+'''
 account.start_forging()
 account.send_money(17211701776878284146, 100000000)
 print(api.get_state())
