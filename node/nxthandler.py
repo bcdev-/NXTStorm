@@ -19,6 +19,7 @@ import subprocess
 import config
 import nxtapi
 import time
+import traceback
 
 class NxtHandler:
     def __init__(self, node):
@@ -50,6 +51,7 @@ class NxtHandler:
         account = api.get_account(None, secret_phrase)
         tx = account.send_money_tx(recipient, amountNQT)
         tx.send()
+        self.logger.info("Done")
 
     def _handle_interrupt(self, command):
         self.logger.debug("Handling interrupt: " + command['name'])
@@ -74,9 +76,15 @@ class NxtHandler:
         while True:
             #TODO: try except
             if not self.node.nxt_handler_interrupts.empty():
-                self._handle_interrupt(self.node.nxt_handler_interrupts.get())
+                try:
+                    self._handle_interrupt(self.node.nxt_handler_interrupts.get())
+                except Exception:
+                    self.logger.error(traceback.format_exc())
             elif not self.node.nxt_handler_commands.empty() and self.node.nxt_api_is_ready.value:
-                self._handle_command(self.node.nxt_handler_commands.get())
+                try:
+                    self._handle_command(self.node.nxt_handler_commands.get())
+                except Exception:
+                    self.logger.error(traceback.format_exc())
             else:
                 time.sleep(0.01)
 

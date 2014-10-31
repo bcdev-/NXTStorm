@@ -19,12 +19,18 @@ import time
 
 scenario_list = []
 
+TPS = 1
+SEND_TX_INTERVAL = 1. / TPS
+COOLDOWN = 4
+
 class ScenarioRunner:
     def __init__(self, coordinator):
         self.logger = logging.getLogger(__name__)
         self.coordinator = coordinator
         self.scenario = None
         self.progress = None
+        self.scenario_start = time.time()
+        self.tx_sent = 0
 
     def _start_node(self, node):
         node.start_nxt()
@@ -32,7 +38,9 @@ class ScenarioRunner:
         node.scenario_progress = {'started': True, 'start_time': time.time()}
 
     def _send_money(self, node):
-        node.send_money(17211701776878284146, 100000000)
+        if self.time > SEND_TX_INTERVAL * self.tx_sent:
+            node.send_money(17211701776878284146, 100000000)
+            self.tx_sent += 1
 
     def _tick_node(self, node):
         if node.scenario_progress == None:
@@ -42,8 +50,12 @@ class ScenarioRunner:
 
     def run(self):
         self.logger.info("Started")
+        self.scenario_start = time.time()
         while True:
-            time.sleep(1) #TODO: 0.01 with proper time handling
+            time.sleep(0.01)
+            self.time = time.time() - self.scenario_start - COOLDOWN
+            if self.time < 0:
+                self.time = 0
             for node in self.coordinator.nodes:
                 self._tick_node(node)
             
