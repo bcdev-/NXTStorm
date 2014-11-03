@@ -45,11 +45,11 @@ class NxtHandler:
         account = api.get_account(account_id, secret_phrase)
         account.start_forging()
 
-    def _send_money(self, recipient, secret_phrase, amountNQT):
+    def _send_money(self, recipient, secret_phrase, amountNQT, pubkey=None):
         self.logger.info("Sending money")
         api = nxtapi.Nxt()
         account = api.get_account(None, secret_phrase)
-        tx = account.send_money_tx(recipient, amountNQT)
+        tx = account.send_money_tx(recipient, amountNQT, pubkey)
         tx.send()
         self.logger.info("Done")
 
@@ -66,8 +66,8 @@ class NxtHandler:
         self.logger.debug("Handling command: " + command['name'])
         if command['name'] == 'start_forging':
             self._start_forging(command['account_id'], command['secret_phrase'])
-        if command['name'] == 'send_money':
-            self._send_money(command['recipient'], command['secret_phrase'], command['amountNQT'])
+        elif command['name'] == 'send_money':
+            self._send_money(command['recipient'], command['secret_phrase'], command['amountNQT'], command['pubkey'])
         else:
             self.logger.error("Unknown command: " + str(command))
 

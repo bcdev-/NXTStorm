@@ -17,10 +17,10 @@ as the name is changed.
 import json
 import requests
 
-TIMEOUT = 0.3
+TIMEOUT = None
 
 class SendMoneyTx:
-    def __init__(self, nxt, account, recipient, amountNQT, feeNQT=100000000, deadline=900):
+    def __init__(self, nxt, account, recipient, amountNQT, pubkey=None, feeNQT=100000000, deadline=900):
         self._nxt = nxt
         self._account = account
         self._recipient = str(int(recipient))
@@ -28,16 +28,20 @@ class SendMoneyTx:
         self._feeNQT = str(int(feeNQT))
         #TODO Pubkey
         self._deadline = str(int(deadline))
+        self._pubkey = pubkey
         self._prepare()
 
     def _prepare(self):
         url = ("http://" + self._nxt.host + "/nxt?requestType=" + "sendMoney" + "&secretPhrase=" + self._account.secret_phrase
             + "&recipient=" + self._recipient + "&amountNQT=" + self._amountNQT + "&feeNQT=" + self._feeNQT + "&deadline=" + self._deadline
             + "&broadcast=false")
-        print(url)
+        if self._pubkey != None:
+            url += "&recipientPublicKey=" + self._pubkey
         #TODO: Error handling
         r = requests.post(url, timeout=TIMEOUT)
         response = json.loads(r.text)
+        if not 'transactionBytes' in response:
+            print('ERROR ' + url + ' ' + str(response))
         self._transaction_bytes = response['transactionBytes']
         self.transaction_id = int(response['transaction'])
 

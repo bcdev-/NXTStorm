@@ -43,5 +43,5 @@ class Account:
         #TODO: Error handling
         r = requests.post(url)
 
-    def send_money_tx(self, recipient, amountNQT):
-        return SendMoneyTx(self._nxt, self, recipient, amountNQT)
+    def send_money_tx(self, recipient, amountNQT, pubkey=None):
+        return SendMoneyTx(self._nxt, self, recipient, amountNQT, pubkey)

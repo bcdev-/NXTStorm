@@ -62,5 +62,5 @@ class NxtChecker:
                 self._is_api_ready()
             else:
                 self._periodic_tasks()
-            time.sleep(0.05)
+            time.sleep(1)
 

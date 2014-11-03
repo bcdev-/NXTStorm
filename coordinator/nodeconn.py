@@ -37,11 +37,16 @@ class NodeConn:
         self.scenario_progress = None
         self.secret_phrase = "aaa"
         self.account_id = 828683301869051229
+        self.accounts = []
 
         self.command_buffer = Queue()
 
         self.block_id = 0
         self.block_height = 0
+        self.account_revolver = 0
+
+    def add_account(self, account_id, secret_phrase, pubkey):
+        self.accounts.append([account_id, secret_phrase, pubkey])
 
     def close(self):
         try:
@@ -104,10 +109,10 @@ class NodeConn:
     def start_nxt(self):
         self.command_buffer.put(json.dumps({"name": "start_nxt"}))
 
-    def start_forging(self):
-        self.command_buffer.put(json.dumps({"name": "start_forging", "secret_phrase": self.secret_phrase, "account_id": self.account_id}))
+    def start_forging(self, secret_phrase, account_id):
+        self.command_buffer.put(json.dumps({"name": "start_forging", "secret_phrase": secret_phrase, "account_id": account_id}))
 
-    def send_money(self, recipient, amountNQT):
-        self.command_buffer.put(json.dumps({"name": "send_money", "secret_phrase": self.secret_phrase,
-                                            "recipient": recipient, "amountNQT": amountNQT}))
+    def send_money(self, recipient, amountNQT, secret_phrase, pubkey=None):
+        self.command_buffer.put(json.dumps({"name": "send_money", "secret_phrase": secret_phrase,
+                                            "recipient": recipient, "amountNQT": amountNQT, "pubkey": pubkey}))
 
